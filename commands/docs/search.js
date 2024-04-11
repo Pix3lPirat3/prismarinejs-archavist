@@ -19,7 +19,8 @@ module.exports = {
         { name: 'prismarine-block', value: 'prismarine-block' },
         { name: 'prismarine-entity', value: 'prismarine-entity' },
         { name: 'node-minecraft-data', value: 'node-minecraft-data' }, // add alternative bot.registry ?
-        { name: 'mineflayer-pathfinder', value: 'mineflayer-pathfinder' }))
+        { name: 'mineflayer-pathfinder', value: 'mineflayer-pathfinder' },
+        { name: 'howdoi', value: 'howdoi' }))
       .addStringOption(option => option.setName('query').setDescription('The keyword you\'re searching for').setRequired(true)),
   async execute(interaction) {
 
@@ -41,12 +42,11 @@ module.exports = {
     });
 
     let package = interaction.options.get("package").value;
+
     let searchQuery = interaction.options.get("query").value;
 
     let search = new Searcher(package);
     let posts = await search.searchMarkdown(searchQuery);
-
-    console.log(posts)
 
     if(!posts.length) {
       return interaction.reply({ content: 'There were no results for that search query!',  ephemeral: true })
@@ -56,7 +56,7 @@ module.exports = {
 
     for (let i = 0; i < posts.length; i++) {
       let post = posts[i];
-      const embed = new EmbedBuilder().setTitle(`\u00bb ${post.header}`).setDescription(post.description + '```JS\n' + post.header + '\n```').setTimestamp();
+      const embed = new EmbedBuilder().setTitle(`\u00bb ${post.header}`).setDescription(post.description).setTimestamp();
       embeds.push(embed);
     }
 
