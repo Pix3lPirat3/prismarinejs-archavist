@@ -76,7 +76,6 @@ module.exports = class Searcher {
     };
 
     // Replace <code> with `code`
-    $(sanitized_html).find('code').contents().unwrap()
     $('code').each(function() {
       $(this).parent('pre').length ? $(this).replaceWith("```JS\n" + $(this).html() + "```") : $(this).replaceWith("`" + $(this).html() + "`");
     });
