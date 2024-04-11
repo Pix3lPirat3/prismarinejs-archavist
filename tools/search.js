@@ -40,6 +40,10 @@ let sources = {
   'node-minecraft-data': {
     url: 'https://raw.githubusercontent.com/PrismarineJS/node-minecraft-data/master/doc/api.md',
     header: 'h3'
+  },
+  'howdoi': {
+    url: 'https://raw.githubusercontent.com/Pix3lPirat3/mineflayer-snippets/main/README.md',
+    header: 'h4'
   }
 }
 
@@ -63,16 +67,25 @@ module.exports = class Searcher {
   async searchMarkdown(searchQuery) {
 
     let sanitized_html = await this.getSanitizedHTML();
-    const $ = require('jquery')(sanitized_html); // Sanitized HTML
+
+    const $ = require('jquery')(sanitized_html);
+
     $.expr[':'].contains = function(a, i, m) {
       return $(a).text().toUpperCase()
           .indexOf(m[3].toUpperCase()) >= 0;
     };
 
+    // Replace <code> with `code`
+    $(sanitized_html).find('code').contents().unwrap()
+    $('code').each(function() {
+      $(this).parent('pre').length ? $(this).replaceWith("```JS\n" + $(this).html() + "```") : $(this).replaceWith("`" + $(this).html() + "`");
+    });
+
     let posts = [];
 
     const elHeaders = $(`${this.source.header}:contains('${searchQuery}')`).toArray();
     for (let a = 0; a < elHeaders.length; a++) {
+
       let elHeader = $(elHeaders[a]);
 
       let elChildren = elHeader.nextUntil('h1, h2, h3, h4, h5'); // Collect the `p, li, ul, ol, code` and other elements (TODO: Collect codeblocks and use ```)
