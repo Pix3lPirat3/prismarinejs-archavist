@@ -80,6 +80,10 @@ module.exports = class Searcher {
       $(this).parent('pre').length ? $(this).replaceWith("```JS\n" + $(this).html() + "```") : $(this).replaceWith("`" + $(this).html() + "`");
     });
 
+    $('li').each(function() {
+      $(this).replaceWith("• " + $(this).html())
+    });
+
     let posts = [];
 
     const elHeaders = $(`${this.source.header}:contains('${searchQuery}')`).toArray();
