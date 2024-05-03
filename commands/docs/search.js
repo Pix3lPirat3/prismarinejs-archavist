@@ -16,6 +16,7 @@ module.exports = {
         { name: 'prismarine-chat', value: 'prismarine-chat' },
         { name: 'prismarine-world', value: 'prismarine-world' },
         { name: 'node-vec3', value: 'node-vec3' },
+        { name: 'node-minecraft-protocol', value: 'node-minecraft-protocol' },
         { name: 'prismarine-block', value: 'prismarine-block' },
         { name: 'prismarine-entity', value: 'prismarine-entity' },
         { name: 'node-minecraft-data', value: 'node-minecraft-data' }, // add alternative bot.registry ?
