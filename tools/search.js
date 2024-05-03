@@ -41,6 +41,10 @@ let sources = {
     url: 'https://raw.githubusercontent.com/PrismarineJS/node-minecraft-data/master/doc/api.md',
     header: 'h3'
   },
+  'node-minecraft-protocol': {
+    url: 'https://raw.githubusercontent.com/PrismarineJS/node-minecraft-protocol/master/docs/API.md',
+    header: 'h3'
+  },
   'howdoi': {
     url: 'https://raw.githubusercontent.com/Pix3lPirat3/mineflayer-snippets/main/README.md',
     header: 'h4'
@@ -80,6 +84,7 @@ module.exports = class Searcher {
       $(this).parent('pre').length ? $(this).replaceWith("```JS\n" + $(this).html() + "```") : $(this).replaceWith("`" + $(this).html() + "`");
     });
 
+    // Replace <li> with •
     $('li').each(function() {
       $(this).replaceWith("• " + $(this).html())
     });
