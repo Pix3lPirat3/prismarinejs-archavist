@@ -21,7 +21,8 @@ module.exports = {
         { name: 'prismarine-entity', value: 'prismarine-entity' },
         { name: 'node-minecraft-data', value: 'node-minecraft-data' }, // add alternative bot.registry ?
         { name: 'mineflayer-pathfinder', value: 'mineflayer-pathfinder' },
-        { name: 'howdoi', value: 'howdoi' }))
+        { name: 'howdoi', value: 'howdoi' },
+        { name: 'bedrock-protocol', value: 'bedrock-protocol'}))
       .addStringOption(option => option.setName('query').setDescription('The keyword you\'re searching for').setRequired(true)),
   async execute(interaction) {
 
