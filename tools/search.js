@@ -48,6 +48,10 @@ let sources = {
   'howdoi': {
     url: 'https://raw.githubusercontent.com/Pix3lPirat3/mineflayer-snippets/main/README.md',
     header: 'h4'
+  },
+  'bedrock-protocol': {
+    url: 'https://raw.githubusercontent.com/PrismarineJS/bedrock-protocol/master/docs/API.md',
+    header: 'h3'
   }
 }
 
