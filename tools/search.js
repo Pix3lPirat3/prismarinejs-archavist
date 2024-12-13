@@ -1,114 +1,126 @@
-const util = require('node:util');
-const marked = require('marked');
+const fs = require('fs');
+const path = require('path');
+const https = require('https');
 
-const jsdom = require('jsdom')
-const createDOMPurify = require('dompurify');
-
-let sources = {
-  mineflayer: {
-    url: 'https://raw.githubusercontent.com/PrismarineJS/mineflayer/master/docs/api.md',
-    header: 'h4'
-  },
-  'mineflayer-pathfinder': {
-    url: 'https://raw.githubusercontent.com/PrismarineJS/mineflayer-pathfinder/master/readme.md',
-    header: 'h3'
-  },
-  'prismarine-windows': {
-    url: 'https://raw.githubusercontent.com/PrismarineJS/prismarine-windows/master/API.md',
-    header: 'h4'
-  },
-  'prismarine-chat': {
-    url: 'https://raw.githubusercontent.com/PrismarineJS/prismarine-chat/master/README.md',
-    header: 'h4'
-  },
-  'prismarine-world': {
-    url: 'https://raw.githubusercontent.com/PrismarineJS/prismarine-world/master/docs/API.md',
-    header: 'h3'
-  },
-  'node-vec3': { // This doesn't have much of an API..
-    url: 'https://raw.githubusercontent.com/PrismarineJS/node-vec3/master/README.md',
-    header: 'h2'
-  },
-  'prismarine-block': {
-    url: 'https://raw.githubusercontent.com/PrismarineJS/prismarine-block/master/doc/API.md',
-    header: 'h4'
-  },
-  'prismarine-entity': {
-    url: 'https://raw.githubusercontent.com/PrismarineJS/prismarine-entity/master/README.md',
-    header: 'h4'
-  },
-  'node-minecraft-data': {
-    url: 'https://raw.githubusercontent.com/PrismarineJS/node-minecraft-data/master/doc/api.md',
-    header: 'h3'
-  },
-  'node-minecraft-protocol': {
-    url: 'https://raw.githubusercontent.com/PrismarineJS/node-minecraft-protocol/master/docs/API.md',
-    header: 'h3'
-  },
-  'howdoi': {
-    url: 'https://raw.githubusercontent.com/Pix3lPirat3/mineflayer-snippets/main/README.md',
-    header: 'h4'
-  },
-  'bedrock-protocol': {
-    url: 'https://raw.githubusercontent.com/PrismarineJS/bedrock-protocol/master/docs/API.md',
-    header: 'h3'
-  }
+/**
+ * Generates a GitHub-style anchor from a header.
+ * @param {string} header - The header text.
+ * @returns {string} - The generated anchor.
+ */
+function generateAnchor(header) {
+  return header
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove non-alphanumeric characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .trim(); // Trim whitespace
 }
 
-module.exports = class Searcher {
+/**
+ * Fetches content from a URL.
+ * @param {string} url - The URL to fetch.
+ * @returns {Promise<string>} - The content of the URL.
+ */
+function fetchFileFromUrl(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (response) => {
+      let data = '';
 
-  constructor(source_type) {
-    this.source = sources[source_type];
-  }
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
 
-  getRawMarkdown() {
-    return fetch(this.source.url).then(res => res.text())
-  }
+      response.on('end', () => {
+        resolve(data);
+      });
 
-  async getSanitizedHTML() {
-    let markdown = await this.getRawMarkdown();
-    const dom = new jsdom.JSDOM('')
-    const DOMPurify = createDOMPurify(dom.window);
-    return new jsdom.JSDOM(DOMPurify.sanitize(marked.parse(markdown.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, '')))).window;
-  }
+      response.on('error', (err) => {
+        reject(err);
+      });
+    });
+  });
+}
 
-  async searchMarkdown(searchQuery) {
+/**
+ * Searches a README file or URL for a query and groups results by headers and body text.
+ * @param {string} filePathOrUrl - The file path or URL to search.
+ * @param {string} query - The search query.
+ * @param {Object} options - Search options.
+ * @param {boolean} [options.caseInsensitive=true] - Perform a case-insensitive search.
+ * @param {boolean} [options.searchInHeaders=true] - Search within headers.
+ * @param {boolean} [options.searchInBody=true] - Search within body text.
+ * @param {boolean} [options.isUrl=false] - Whether the input is a URL.
+ * @param {number[]} [options.headerDepths=[]] - Header depths to include (e.g., [3, 4]).
+ * @returns {Promise<Object[]>} - Matched results with header, body, and depth.
+ */
+async function advancedSearchReadme(filePathOrUrl, query, options = {}) {
+  const {
+    caseInsensitive = true,
+    searchInHeaders = true,
+    searchInBody = true,
+    isUrl = false,
+    headerDepths = [],
+  } = options;
 
-    let sanitized_html = await this.getSanitizedHTML();
+  try {
+    const content = isUrl
+      ? await fetchFileFromUrl(filePathOrUrl)
+      : await fs.promises.readFile(filePathOrUrl, 'utf-8');
 
-    const $ = require('jquery')(sanitized_html);
+    const lines = content.split('\n');
+    const results = [];
 
-    $.expr[':'].contains = function(a, i, m) {
-      return $(a).text().toUpperCase()
-          .indexOf(m[3].toUpperCase()) >= 0;
+    let currentHeader = null;
+    let currentBody = [];
+    let currentDepth = null;
+
+    const flushCurrentGroup = () => {
+      if (currentHeader || currentBody.length > 0) {
+        results.push({
+          header: currentHeader || '',
+          body: currentBody.join('\n').trim(),
+          depth: currentDepth,
+        });
+        currentBody = [];
+      }
     };
 
-    // Replace <code> with `code`
-    $('code').each(function() {
-      $(this).parent('pre').length ? $(this).replaceWith("```JS\n" + $(this).html() + "```") : $(this).replaceWith("`" + $(this).html() + "`");
-    });
+    for (const line of lines) {
+      const headerMatch = line.match(/^(#+)\s+(.*)/);
+      if (headerMatch) {
+        const depth = headerMatch[1].length;
 
-    // Replace <li> with •
-    $('li').each(function() {
-      $(this).replaceWith("• " + $(this).html())
-    });
+        if (headerDepths.length > 0 && !headerDepths.includes(depth)) {
+          currentHeader = null;
+          currentDepth = null;
+          currentBody = [];
+          continue;
+        }
 
-    let posts = [];
+        flushCurrentGroup();
+        currentHeader = headerMatch[2];
+        currentDepth = depth;
+        continue;
+      }
 
-    const elHeaders = $(`${this.source.header}:contains('${searchQuery}')`).toArray();
-    for (let a = 0; a < elHeaders.length; a++) {
-
-      let elHeader = $(elHeaders[a]);
-
-      let elChildren = elHeader.nextUntil('h1, h2, h3, h4, h5'); // Collect the `p, li, ul, ol, code` and other elements (TODO: Collect codeblocks and use ```)
-
-      posts.push({
-        header: elHeader.text().trim(),
-        description: elChildren.text().trim()
-      });
+      if (currentHeader) {
+        currentBody.push(line);
+      }
     }
 
-    return posts;
-  }
+    flushCurrentGroup();
 
+    const searchQuery = caseInsensitive ? query.toLowerCase() : query;
+
+    return results
+      .filter(({ header, body }) => {
+        const headerMatch = searchInHeaders && header.toLowerCase().includes(searchQuery);
+        const bodyMatch = searchInBody && body.toLowerCase().includes(searchQuery);
+        return headerMatch || bodyMatch;
+      })
+      .map(({ header, body, depth }) => ({ anchor: generateAnchor(header), header, body, depth }));
+  } catch (error) {
+    console.error('Error processing the file or URL:', error);
+  }
 }
+
+module.exports = { advancedSearchReadme }
