@@ -49,6 +49,11 @@ module.exports = {
     api: 'https://github.com/PrismarineJS/node-minecraft-protocol/blob/master/docs/API.md#',
     headers: [3]
   },
+  'prismarine-item': {
+    file: 'prismarine-item.md',
+    api: 'https://github.com/PrismarineJS/prismarine-item/blob/master/README.md#',
+    headers: [3, 4]
+  },
   'bedrock-protocol': {
     file: 'bedrock-protocol.md',
     api: 'https://github.com/PrismarineJS/bedrock-protocol/blob/master/docs/API.md#',
