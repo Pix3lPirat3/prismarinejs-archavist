@@ -90,6 +90,7 @@ async function advancedSearchReadme(filePathOrUrl, query, options = {}) {
         const depth = headerMatch[1].length;
 
         if (headerDepths.length > 0 && !headerDepths.includes(depth)) {
+          flushCurrentGroup();
           currentHeader = null;
           currentDepth = null;
           currentBody = [];
