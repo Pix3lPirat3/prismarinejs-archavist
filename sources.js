@@ -52,7 +52,7 @@ module.exports = {
   'prismarine-item': {
     file: 'prismarine-item.md',
     api: 'https://github.com/PrismarineJS/prismarine-item/blob/master/README.md#',
-    headers: [3, 4]
+    headers: [3]
   },
   'bedrock-protocol': {
     file: 'bedrock-protocol.md',
